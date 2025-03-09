@@ -1,0 +1,281 @@
+/* Dark Theme for Text Adventure Game UI */
+
+/* Global Styles */
+QWidget {
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-size: 10pt;
+}
+
+QLabel {
+    color: #cdd6f4;
+}
+
+QTextEdit, QLineEdit, QPlainTextEdit {
+    background-color: #313244;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+    padding: 4px;
+    selection-background-color: #74c7ec;
+    selection-color: #1e1e2e;
+}
+
+QTextEdit:focus, QLineEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #89b4fa;
+}
+
+QPushButton {
+    background-color: #45475a;
+    border: 1px solid #585b70;
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #cdd6f4;
+}
+
+QPushButton:hover {
+    background-color: #585b70;
+}
+
+QPushButton:pressed {
+    background-color: #313244;
+}
+
+QPushButton:disabled {
+    background-color: #313244;
+    color: #6c7086;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background-color: #313244;
+    width: 10px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #585b70;
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #6c7086;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background-color: #313244;
+    height: 10px;
+    margin: 0px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #585b70;
+    min-width: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: #6c7086;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+
+QTabWidget::pane {
+    border: 1px solid #45475a;
+    border-radius: 4px;
+    top: -1px;
+}
+
+QTabBar::tab {
+    background-color: #313244;
+    border: 1px solid #45475a;
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 6px 12px;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+    background-color: #45475a;
+}
+
+QTabBar::tab:hover:!selected {
+    background-color: #3a3c4e;
+}
+
+QListWidget {
+    background-color: #313244;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+    outline: none;
+}
+
+QListWidget::item {
+    padding: 4px;
+    border-radius: 2px;
+}
+
+QListWidget::item:selected {
+    background-color: #74c7ec;
+    color: #1e1e2e;
+}
+
+QListWidget::item:hover:!selected {
+    background-color: #45475a;
+}
+
+QMenu {
+    background-color: #313244;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+}
+
+QMenu::item {
+    padding: 6px 24px 6px 12px;
+}
+
+QMenu::item:selected {
+    background-color: #45475a;
+}
+
+QToolTip {
+    background-color: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+/* Custom Styles for Game UI */
+#mainStoryTextEdit {
+    font-size: 11pt;
+    line-height: 1.4;
+}
+
+#gmLogTextEdit {
+    font-size: 10pt;
+    line-height: 1.3;
+}
+
+#statusBar {
+    background-color: #313244;
+    border-top: 1px solid #45475a;
+    padding: 4px;
+}
+
+#healthBar, #manaBar, #staminaBar {
+    border: 1px solid #45475a;
+    border-radius: 2px;
+    text-align: center;
+    min-height: 16px;
+}
+
+#healthBar {
+    background-color: #f38ba8;
+}
+
+#manaBar {
+    background-color: #89b4fa;
+}
+
+#staminaBar {
+    background-color: #a6e3a1;
+}
+
+#timeOfDayLabel {
+    font-weight: bold;
+    color: #f9e2af;
+}
+
+#inventoryList {
+    font-size: 10pt;
+}
+
+#characterWindow {
+    background-color: #1e1e2e;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+}
+
+#equipmentSlot {
+    background-color: #313244;
+    border: 1px dashed #45475a;
+    border-radius: 4px;
+    padding: 8px;
+    min-height: 40px;
+    min-width: 120px;
+}
+
+#equipmentSlot[occupied="true"] {
+    border: 1px solid #89b4fa;
+}
+
+#slotLabel {
+    color: #6c7086;
+    font-size: 9pt;
+}
+
+#itemActionMenu {
+    background-color: #313244;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+}
+
+#itemTooltip {
+    background-color: #313244;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+    padding: 8px;
+    max-width: 300px;
+}
+
+#itemName {
+    font-weight: bold;
+    font-size: 11pt;
+    color: #89b4fa;
+}
+
+#itemRarity {
+    font-style: italic;
+    font-size: 9pt;
+}
+
+#itemDescription {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+#itemStats {
+    font-size: 9pt;
+    color: #a6e3a1;
+}
+
+/* Rarity Colors */
+.common {
+    color: #cdd6f4;
+}
+
+.uncommon {
+    color: #a6e3a1;
+}
+
+.rare {
+    color: #89b4fa;
+}
+
+.epic {
+    color: #cba6f7;
+}
+
+.legendary {
+    color: #fab387;
+} 

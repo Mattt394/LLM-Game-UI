@@ -1,0 +1,14 @@
+{
+    "name": "Fire Elemental Sword",
+    "item_type": "weapon",
+    "rarity": "uncommon",
+    "description": "A basic sword. But made of fire.",
+    "slot": "main_hand",
+    "level_requirement": 1,
+    "physical_attack": 0,
+    "physical_defense": 0,
+    "magic_attack": 0,
+    "magic_defense": 0,
+    "attack_dice": ["1d6"],
+    "tags": {"tags":["fire"]}
+}

@@ -1,0 +1,14 @@
+{
+    "name": "Health Potion",
+    "item_type": "consumable",
+    "description": "A small vial filled with a red liquid. When consumed, it instantly restores 30 health points to an ally.",
+    "effects": [
+      {
+        "target_group": "allies",
+        "action": "heal",
+        "value": 30
+      }
+    ],
+    "target_group": "single_ally"
+  }
+  
