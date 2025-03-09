@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
-                             QMenu, QToolTip, QLabel, QFrame, QHBoxLayout)
-from PyQt6.QtCore import Qt, pyqtSignal, QPoint
+                             QMenu, QToolTip, QLabel, QFrame, QHBoxLayout, QApplication)
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QRect, QTimer, QEvent
+from PyQt6.QtGui import QEnterEvent, QCursor
 
 
 class ItemTooltip(QFrame):
@@ -80,6 +81,7 @@ class InventoryPanel(QWidget):
         super().__init__(parent)
         self.setObjectName("inventoryPanel")
         self.tooltip = None
+        self.current_item = None
         self._init_ui()
     
     def _init_ui(self):
@@ -93,7 +95,7 @@ class InventoryPanel(QWidget):
         self.inventory_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.inventory_list.customContextMenuRequested.connect(self._show_context_menu)
         self.inventory_list.itemEntered.connect(self._show_item_tooltip)
-        self.inventory_list.viewportEntered.connect(self._hide_tooltip)
+        self.inventory_list.leaveEvent = self._list_leave_event
         
         layout.addWidget(self.inventory_list)
         self.setLayout(layout)
@@ -145,19 +147,46 @@ class InventoryPanel(QWidget):
         if not item:
             return
         
+        # If we're showing a tooltip for a different item, hide the current one
+        if self.current_item != item and self.tooltip:
+            self._hide_tooltip()
+        
+        self.current_item = item
         game_item = item.data(Qt.ItemDataRole.UserRole)
         
         # Create and show the tooltip
         if self.tooltip:
+            self.tooltip.hide()
             self.tooltip.deleteLater()
         
         self.tooltip = ItemTooltip(game_item)
         
-        # Position the tooltip next to the item
-        pos = self.inventory_list.mapToGlobal(self.inventory_list.visualItemRect(item).topRight())
-        pos.setX(pos.x() + 10)  # Offset to the right
+        # Calculate tooltip size before showing it
+        self.tooltip.adjustSize()
+        tooltip_width = self.tooltip.width()
+        tooltip_height = self.tooltip.height()
         
-        self.tooltip.move(pos)
+        # Position the tooltip next to the item
+        item_rect = self.inventory_list.visualItemRect(item)
+        global_pos = self.inventory_list.mapToGlobal(item_rect.topRight())
+        
+        # Get screen geometry to ensure tooltip stays within screen
+        screen_rect = QApplication.primaryScreen().availableGeometry()
+        
+        # Adjust position if tooltip would go off-screen
+        if global_pos.x() + tooltip_width > screen_rect.right():
+            # If tooltip would go off right edge, show it to the left of the item
+            global_pos.setX(global_pos.x() - tooltip_width - item_rect.width() - 10)
+        else:
+            # Otherwise, show it to the right with a small offset
+            global_pos.setX(global_pos.x() + 10)
+        
+        # Check if tooltip would go off bottom of screen
+        if global_pos.y() + tooltip_height > screen_rect.bottom():
+            # Move it up so it fits
+            global_pos.setY(screen_rect.bottom() - tooltip_height)
+        
+        self.tooltip.move(global_pos)
         self.tooltip.show()
     
     def _hide_tooltip(self):
@@ -165,4 +194,16 @@ class InventoryPanel(QWidget):
         if self.tooltip:
             self.tooltip.hide()
             self.tooltip.deleteLater()
-            self.tooltip = None 
+            self.tooltip = None
+        self.current_item = None
+    
+    def _list_leave_event(self, event):
+        """Custom leave event for the list widget."""
+        self._hide_tooltip()
+        # Call the original leaveEvent
+        QListWidget.leaveEvent(self.inventory_list, event)
+    
+    def leaveEvent(self, event):
+        """Handle when mouse leaves the panel."""
+        self._hide_tooltip()
+        super().leaveEvent(event) 
