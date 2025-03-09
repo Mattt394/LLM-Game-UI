@@ -31,23 +31,15 @@ class GameApp:
         # Initialize UI with game state
         self._update_ui()
         
-        # Debug: Print character class info to verify it's properly initialized
-        print(f"Character Class: {self.game_state.character.character_class.name}")
-        print(f"Class Description: {self.game_state.character.character_class.description}")
-        print(f"Skills: {[skill.name for skill in self.game_state.character.character_class.skills]}")
-        
         # Override the main window's _show_character_window method to add debug output
         original_show_character_window = self.main_window._show_character_window
         
         def debug_show_character_window():
-            print("Opening character window...")
             result = original_show_character_window()
-            print("Character window opened, updating with character data...")
             self.main_window.update_character_window(
                 self.game_state.character,
                 self.game_state.current_location
             )
-            print("Character window updated.")
             return result
         
         self.main_window._show_character_window = debug_show_character_window
