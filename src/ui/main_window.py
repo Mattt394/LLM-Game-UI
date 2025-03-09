@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
-                             QLineEdit, QPushButton, QSplitter, QDialog)
+                             QLineEdit, QPushButton, QSplitter, QDialog, QSpacerItem, QSizePolicy)
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtGui import QAction, QIcon, QFont
 
 from .status_bar import StatusBar
 from .inventory_panel import InventoryPanel
@@ -30,11 +30,12 @@ class MainWindow(QMainWindow):
         
         # Main layout
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(0, 0, 0, 15)  # Add bottom margin
         main_layout.setSpacing(0)
         
         # Create splitter for main content
         splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setChildrenCollapsible(False)
         
         # Left panel (Story)
         left_panel = QWidget()
@@ -95,12 +96,41 @@ class MainWindow(QMainWindow):
         splitter.addWidget(right_panel)
         splitter.setSizes([700, 500])  # Initial sizes
         
+        # Add spacer for padding
+        main_layout.addWidget(splitter, 10)  # Give the splitter a larger stretch factor
+        
+        # Character button layout
+        button_layout = QHBoxLayout()
+        button_layout.setContentsMargins(15, 15, 15, 15)  # Add more padding
+        
+        # Character button (only takes up about 1/5 of the width)
+        self.character_button = QPushButton("Character Sheet")
+        self.character_button.setObjectName("characterButton")
+        self.character_button.setMinimumHeight(40)
+        self.character_button.setMaximumWidth(200)  # Limit width to about 1/5 of screen
+        font = self.character_button.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        self.character_button.setFont(font)
+        self.character_button.clicked.connect(self._show_character_window)
+        
+        # Add button to layout with spacer
+        button_layout.addWidget(self.character_button)
+        button_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        
         # Status bar
         self.status_bar = StatusBar()
         
         # Add widgets to main layout
-        main_layout.addWidget(splitter)
+        main_layout.addLayout(button_layout)
+        
+        # Add spacer for additional padding before status bar
+        main_layout.addItem(QSpacerItem(20, 15, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+        
         main_layout.addWidget(self.status_bar)
+        
+        # Add spacer for additional padding after status bar
+        main_layout.addItem(QSpacerItem(20, 15, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         
         # Create menu bar
         self._create_menu_bar()
@@ -149,6 +179,7 @@ class MainWindow(QMainWindow):
     def _show_character_window(self):
         """Show the character window."""
         if not self.character_window:
+            # Create the character window if it doesn't exist
             self.character_window = CharacterWindow()
             
             # Connect signals
@@ -158,7 +189,23 @@ class MainWindow(QMainWindow):
             self.character_window.item_equipped.connect(self._handle_item_equipped)
             self.character_window.item_unequipped.connect(self._handle_item_unequipped)
         
+        # Always update the character window with current inventory before showing it
+        if hasattr(self, 'inventory_panel') and self.inventory_panel:
+            items = []
+            for i in range(self.inventory_panel.inventory_list.count()):
+                item = self.inventory_panel.inventory_list.item(i)
+                if item:
+                    items.append(item.data(Qt.ItemDataRole.UserRole))
+            self.character_window.inventory_panel.update_inventory(items)
+        
+        # Show the window
         self.character_window.show()
+        
+        # Force an update of the character window if it's already created
+        # This ensures the character class and location information is displayed
+        if hasattr(self, '_character') and hasattr(self, '_location'):
+            self.character_window.update_character(self._character)
+            self.character_window.update_location(self._location)
     
     def _toggle_theme(self):
         """Toggle between light and dark themes."""
@@ -191,6 +238,10 @@ class MainWindow(QMainWindow):
     def update_inventory(self, items):
         """Update the inventory panel with new items."""
         self.inventory_panel.update_inventory(items)
+        
+        # Also update character window inventory if it exists
+        if self.character_window:
+            self.character_window.inventory_panel.update_inventory(items)
     
     def update_status_bar(self, health, max_health, mana, max_mana, stamina, max_stamina, time_of_day):
         """Update the status bar with new stats."""
@@ -198,9 +249,23 @@ class MainWindow(QMainWindow):
     
     def update_character_window(self, character, location):
         """Update the character window with new character and location information."""
+        # Store character and location for later use
+        self._character = character
+        self._location = location
+        
+        # Update character window if it exists
         if self.character_window:
             self.character_window.update_character(character)
             self.character_window.update_location(location)
+            
+            # Ensure inventory is synced
+            if hasattr(self, 'inventory_panel') and self.inventory_panel:
+                items = []
+                for i in range(self.inventory_panel.inventory_list.count()):
+                    item = self.inventory_panel.inventory_list.item(i)
+                    if item:
+                        items.append(item.data(Qt.ItemDataRole.UserRole))
+                self.character_window.inventory_panel.update_inventory(items)
     
     def _handle_item_examined(self, item):
         """Handle item examination."""

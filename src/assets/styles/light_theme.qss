@@ -207,10 +207,34 @@ QProgressBar::chunk {
     font-size: 10pt;
 }
 
+#inventoryHeader {
+    font-size: 12pt;
+    color: #1e66f5;
+    padding: 4px;
+}
+
 #characterWindow {
     background-color: #eff1f5;
     border: 1px solid #ccd0da;
     border-radius: 4px;
+}
+
+#characterButton {
+    background-color: #dce0e8;
+    border: 1px solid #ccd0da;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 11pt;
+    color: #4c4f69;
+}
+
+#characterButton:hover {
+    background-color: #ccd0da;
+    border: 1px solid #bcc0cc;
+}
+
+#characterButton:pressed {
+    background-color: #bcc0cc;
 }
 
 #equipmentSlot {

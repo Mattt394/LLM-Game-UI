@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
                              QMenu, QToolTip, QLabel, QFrame, QHBoxLayout, QApplication)
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QRect, QTimer, QEvent
-from PyQt6.QtGui import QEnterEvent, QCursor
+from PyQt6.QtGui import QEnterEvent, QCursor, QFont
 
 
 class ItemTooltip(QFrame):
@@ -87,7 +87,18 @@ class InventoryPanel(QWidget):
     def _init_ui(self):
         """Initialize the UI components."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(5)
+        
+        # Add header/title
+        header = QLabel("Inventory", self)
+        header.setObjectName("inventoryHeader")
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = header.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        header.setFont(font)
+        layout.addWidget(header)
         
         # Inventory list
         self.inventory_list = QListWidget(self)

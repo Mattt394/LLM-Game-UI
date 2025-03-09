@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QScrollArea, QFrame, QGridLayout, QListWidget, QListWidgetItem)
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont
 from .inventory_panel import InventoryPanel
 
 
@@ -79,9 +80,23 @@ class EquipmentPanel(QWidget):
     
     def _init_ui(self):
         """Initialize the UI components."""
-        layout = QGridLayout(self)
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(10)
+        
+        # Add header
+        header = QLabel("Equipment", self)
+        header.setObjectName("equipmentHeader")
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = header.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        header.setFont(font)
+        layout.addWidget(header)
+        
+        # Equipment grid
+        equipment_layout = QGridLayout()
+        equipment_layout.setSpacing(10)
         
         # Create equipment slots
         self.slots['head'] = EquipmentSlot("head", self)
@@ -94,14 +109,16 @@ class EquipmentPanel(QWidget):
         self.slots['two_handed'] = EquipmentSlot("two_handed", self)
         
         # Add slots to layout
-        layout.addWidget(self.slots['head'], 0, 1)
-        layout.addWidget(self.slots['chest'], 1, 1)
-        layout.addWidget(self.slots['legs'], 2, 1)
-        layout.addWidget(self.slots['hands'], 1, 0)
-        layout.addWidget(self.slots['feet'], 3, 1)
-        layout.addWidget(self.slots['main_hand'], 1, 2)
-        layout.addWidget(self.slots['off_hand'], 2, 2)
-        layout.addWidget(self.slots['two_handed'], 3, 2)
+        equipment_layout.addWidget(self.slots['head'], 0, 1)
+        equipment_layout.addWidget(self.slots['chest'], 1, 1)
+        equipment_layout.addWidget(self.slots['legs'], 2, 1)
+        equipment_layout.addWidget(self.slots['hands'], 1, 0)
+        equipment_layout.addWidget(self.slots['feet'], 3, 1)
+        equipment_layout.addWidget(self.slots['main_hand'], 1, 2)
+        equipment_layout.addWidget(self.slots['off_hand'], 2, 2)
+        equipment_layout.addWidget(self.slots['two_handed'], 3, 2)
+        
+        layout.addLayout(equipment_layout)
         
         # Connect signals
         for slot_name, slot in self.slots.items():
@@ -130,11 +147,25 @@ class ClassPanel(QWidget):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(10)
         
+        # Add header
+        header = QLabel("Character Class", self)
+        header.setObjectName("classHeader")
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = header.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        header.setFont(font)
+        layout.addWidget(header)
+        
         # Class name and description
         self.class_name = QLabel(self)
         self.class_name.setObjectName("className")
         self.class_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.class_name.setWordWrap(True)
+        font = self.class_name.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        self.class_name.setFont(font)
         
         self.class_description = QLabel(self)
         self.class_description.setObjectName("classDescription")
@@ -143,6 +174,9 @@ class ClassPanel(QWidget):
         # Skills list
         skills_label = QLabel("Skills:", self)
         skills_label.setObjectName("skillsLabel")
+        font = skills_label.font()
+        font.setBold(True)
+        skills_label.setFont(font)
         
         self.skills_list = QListWidget(self)
         self.skills_list.setObjectName("skillsList")
@@ -157,8 +191,9 @@ class ClassPanel(QWidget):
     
     def update_class(self, character_class):
         """Update the class panel with new class information."""
-        self.class_name.setText(character_class.name)
-        self.class_description.setText(character_class.description)
+        # Set text with explicit styling to ensure visibility
+        self.class_name.setText(f"<h2>{character_class.name}</h2>")
+        self.class_description.setText(f"<p>{character_class.description}</p>")
         
         self.skills_list.clear()
         for skill in character_class.skills:
@@ -181,13 +216,29 @@ class WorldPanel(QWidget):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(10)
         
+        # Add header
+        header = QLabel("World Map", self)
+        header.setObjectName("worldHeader")
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = header.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        header.setFont(font)
+        layout.addWidget(header)
+        
         # Current location
         location_label = QLabel("Current Location:", self)
         location_label.setObjectName("locationLabel")
+        font = location_label.font()
+        font.setBold(True)
+        location_label.setFont(font)
         
         self.location_name = QLabel(self)
         self.location_name.setObjectName("locationName")
         self.location_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = self.location_name.font()
+        font.setBold(True)
+        self.location_name.setFont(font)
         
         self.location_description = QLabel(self)
         self.location_description.setObjectName("locationDescription")
@@ -196,6 +247,9 @@ class WorldPanel(QWidget):
         # Connections
         connections_label = QLabel("Connections:", self)
         connections_label.setObjectName("connectionsLabel")
+        font = connections_label.font()
+        font.setBold(True)
+        connections_label.setFont(font)
         
         self.connections_list = QListWidget(self)
         self.connections_list.setObjectName("connectionsList")
@@ -211,9 +265,11 @@ class WorldPanel(QWidget):
     
     def update_location(self, location):
         """Update the world panel with new location information."""
-        self.location_name.setText(location.name)
-        self.location_description.setText(location.description)
+        # Set location name and description with explicit styling
+        self.location_name.setText(f"<h3>{location.name}</h3>")
+        self.location_description.setText(f"<p>{location.description}</p>")
         
+        # Update connections list
         self.connections_list.clear()
         for connection in location.connections:
             self.connections_list.addItem(connection)
@@ -231,20 +287,24 @@ class CharacterWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("characterWindow")
-        self.setWindowTitle("Character")
+        self.setWindowTitle("Character Sheet")
         self.resize(800, 600)
         self._init_ui()
     
     def _init_ui(self):
         """Initialize the UI components."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
         
         # Character name
         self.character_name = QLabel(self)
         self.character_name.setObjectName("characterName")
         self.character_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = self.character_name.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 2)
+        self.character_name.setFont(font)
         layout.addWidget(self.character_name)
         
         # Tab widget
@@ -253,6 +313,8 @@ class CharacterWindow(QWidget):
         # Equipment & Inventory tab
         equipment_inventory_tab = QWidget()
         equipment_inventory_layout = QHBoxLayout(equipment_inventory_tab)
+        equipment_inventory_layout.setContentsMargins(5, 5, 5, 5)
+        equipment_inventory_layout.setSpacing(10)
         
         # Equipment panel
         self.equipment_panel = EquipmentPanel(equipment_inventory_tab)
@@ -285,9 +347,14 @@ class CharacterWindow(QWidget):
     
     def update_character(self, character):
         """Update the character window with new character information."""
-        self.character_name.setText(character.name)
+        # Set character name with explicit styling
+        self.character_name.setText(f"<h1>{character.name}</h1>")
+        
+        # Update equipment and inventory
         self.equipment_panel.update_equipment(character.equipment.equipment)
         self.inventory_panel.update_inventory(character.inventory)
+        
+        # Update class panel
         self.class_panel.update_class(character.character_class)
     
     def update_location(self, location):
