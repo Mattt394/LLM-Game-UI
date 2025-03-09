@@ -198,6 +198,22 @@ QProgressBar::chunk {
     background-color: #df8e1d; /* Yellow for stamina */
 }
 
+#expBar {
+    background-color: #acb0be; /* Dark grey for depleted portion */
+    border: 1px solid #ccd0da;
+    border-radius: 2px;
+    min-height: 12px;
+}
+
+#expBar::chunk {
+    background-color: #8839ef; /* Purple for experience */
+    border-radius: 1px;
+}
+
+#levelLabel, #expLabel, #expValueLabel {
+    color: #8839ef; /* Purple for experience text */
+}
+
 #timeOfDayLabel {
     font-weight: bold;
     color: #df8e1d;
@@ -207,7 +223,7 @@ QProgressBar::chunk {
     font-size: 10pt;
 }
 
-#inventoryHeader {
+#inventoryHeader, #equipmentHeader, #classHeader, #worldHeader, #storyHeader, #gmHeader {
     font-size: 12pt;
     color: #1e66f5;
     padding: 4px;

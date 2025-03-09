@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
-                             QLineEdit, QPushButton, QSplitter, QDialog, QSpacerItem, QSizePolicy)
+                             QLineEdit, QPushButton, QSplitter, QDialog, QSpacerItem, QSizePolicy, QListWidgetItem)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QIcon, QFont
 
@@ -287,8 +287,74 @@ class MainWindow(QMainWindow):
         """Handle item equipping."""
         # This would typically send a message to the backend
         self.story_text_edit.append(f"<span style='color:#a6e3a1;'>You:</span> I equip the {item.name}.")
+        
+        # Actually equip the item in the character's equipment
+        if hasattr(self, '_character'):
+            # Remove from inventory
+            for i in range(self.inventory_panel.inventory_list.count()):
+                list_item = self.inventory_panel.inventory_list.item(i)
+                if list_item and list_item.data(Qt.ItemDataRole.UserRole) == item:
+                    self.inventory_panel.inventory_list.takeItem(i)
+                    break
+            
+            # Add to equipment
+            if item.slot == 'two_handed':
+                # Unequip main_hand and off_hand if equipping a two-handed weapon
+                self._character.equipment.equipment['main_hand'] = None
+                self._character.equipment.equipment['off_hand'] = None
+                self._character.equipment.equipment['two_handed'] = item
+            elif item.slot in ['main_hand', 'off_hand']:
+                # Unequip two_handed if equipping a one-handed weapon
+                self._character.equipment.equipment['two_handed'] = None
+                self._character.equipment.equipment[item.slot] = item
+            elif item.slot == 'accessories':
+                # Add to accessories list
+                if 'accessories' not in self._character.equipment.equipment:
+                    self._character.equipment.equipment['accessories'] = []
+                if len(self._character.equipment.equipment['accessories']) < self._character.equipment.MAX_ACCESSORIES:
+                    self._character.equipment.equipment['accessories'].append(item)
+            else:
+                # Regular equipment slot
+                self._character.equipment.equipment[item.slot] = item
+            
+            # Update character window if it exists
+            if self.character_window:
+                self.character_window.equipment_panel.update_equipment(self._character.equipment.equipment)
     
     def _handle_item_unequipped(self, slot, item):
         """Handle item unequipping."""
         # This would typically send a message to the backend
-        self.story_text_edit.append(f"<span style='color:#a6e3a1;'>You:</span> I unequip the {item.name}.") 
+        self.story_text_edit.append(f"<span style='color:#a6e3a1;'>You:</span> I unequip the {item.name}.")
+        
+        # Actually unequip the item from the character's equipment
+        if hasattr(self, '_character'):
+            # Remove from equipment
+            if slot == 'accessories':
+                if 'accessories' in self._character.equipment.equipment:
+                    if item in self._character.equipment.equipment['accessories']:
+                        self._character.equipment.equipment['accessories'].remove(item)
+            else:
+                self._character.equipment.equipment[slot] = None
+            
+            # Add back to inventory
+            self.inventory_panel.inventory_list.addItem(self._create_inventory_item(item))
+            
+            # Update character window if it exists
+            if self.character_window:
+                self.character_window.equipment_panel.update_equipment(self._character.equipment.equipment)
+                self.character_window.inventory_panel.update_inventory(self._get_inventory_items())
+    
+    def _create_inventory_item(self, item):
+        """Create a QListWidgetItem for an inventory item."""
+        list_item = QListWidgetItem(item.name)
+        list_item.setData(Qt.ItemDataRole.UserRole, item)
+        return list_item
+    
+    def _get_inventory_items(self):
+        """Get all items from the inventory panel."""
+        items = []
+        for i in range(self.inventory_panel.inventory_list.count()):
+            item = self.inventory_panel.inventory_list.item(i)
+            if item:
+                items.append(item.data(Qt.ItemDataRole.UserRole))
+        return items 

@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                             QScrollArea, QFrame, QGridLayout, QListWidget, QListWidgetItem)
+                             QScrollArea, QFrame, QGridLayout, QListWidget, QListWidgetItem,
+                             QProgressBar)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from .inventory_panel import InventoryPanel
@@ -171,6 +172,39 @@ class ClassPanel(QWidget):
         self.class_description.setObjectName("classDescription")
         self.class_description.setWordWrap(True)
         
+        # Level and Experience
+        level_exp_layout = QHBoxLayout()
+        
+        self.level_label = QLabel("Level: 1", self)
+        self.level_label.setObjectName("levelLabel")
+        font = self.level_label.font()
+        font.setBold(True)
+        self.level_label.setFont(font)
+        
+        level_exp_layout.addWidget(self.level_label)
+        level_exp_layout.addStretch()
+        
+        # Experience bar
+        exp_layout = QVBoxLayout()
+        
+        exp_header_layout = QHBoxLayout()
+        exp_label = QLabel("Experience:", self)
+        exp_label.setObjectName("expLabel")
+        self.exp_value_label = QLabel("0/100", self)
+        self.exp_value_label.setObjectName("expValueLabel")
+        exp_header_layout.addWidget(exp_label)
+        exp_header_layout.addStretch()
+        exp_header_layout.addWidget(self.exp_value_label)
+        
+        self.exp_bar = QProgressBar(self)
+        self.exp_bar.setObjectName("expBar")
+        self.exp_bar.setTextVisible(False)
+        self.exp_bar.setRange(0, 100)
+        self.exp_bar.setValue(0)
+        
+        exp_layout.addLayout(exp_header_layout)
+        exp_layout.addWidget(self.exp_bar)
+        
         # Skills list
         skills_label = QLabel("Skills:", self)
         skills_label.setObjectName("skillsLabel")
@@ -180,10 +214,14 @@ class ClassPanel(QWidget):
         
         self.skills_list = QListWidget(self)
         self.skills_list.setObjectName("skillsList")
+        self.skills_list.setMouseTracking(True)  # Enable mouse tracking for hover events
+        self.skills_list.setToolTipDuration(5000)  # Set tooltip duration to 5 seconds
         
         # Add widgets to layout
         layout.addWidget(self.class_name)
         layout.addWidget(self.class_description)
+        layout.addLayout(level_exp_layout)
+        layout.addLayout(exp_layout)
         layout.addWidget(skills_label)
         layout.addWidget(self.skills_list)
         
@@ -198,8 +236,39 @@ class ClassPanel(QWidget):
         self.skills_list.clear()
         for skill in character_class.skills:
             item = QListWidgetItem(f"{skill.name} (Level {skill.level})")
-            item.setToolTip(skill.description)
+            
+            # Create detailed tooltip with HTML formatting
+            tooltip = f"""
+            <h3>{skill.name}</h3>
+            <p><b>Level:</b> {skill.level}</p>
+            <p><b>Description:</b> {skill.description}</p>
+            """
+            
+            # Add cost information if available
+            if skill.cost:
+                cost_text = f"<p><b>Cost:</b> {skill.cost.get('amount', 0)} {skill.cost.get('resource', 'mana')}</p>"
+                tooltip += cost_text
+            
+            # Add effects information if available
+            if skill.effects:
+                effects_text = "<p><b>Effects:</b></p><ul>"
+                for effect in skill.effects:
+                    action = effect.get("action", "")
+                    value = effect.get("value", 0)
+                    target = effect.get("target_group", "")
+                    effects_text += f"<li>{action.capitalize()} {value} to {target}</li>"
+                effects_text += "</ul>"
+                tooltip += effects_text
+            
+            item.setToolTip(tooltip)
             self.skills_list.addItem(item)
+    
+    def update_experience(self, level, experience, experience_to_next_level):
+        """Update the experience bar with new experience information."""
+        self.level_label.setText(f"Level: {level}")
+        self.exp_value_label.setText(f"{experience}/{experience_to_next_level}")
+        self.exp_bar.setRange(0, experience_to_next_level)
+        self.exp_bar.setValue(experience)
 
 
 class WorldPanel(QWidget):
@@ -354,8 +423,13 @@ class CharacterWindow(QWidget):
         self.equipment_panel.update_equipment(character.equipment.equipment)
         self.inventory_panel.update_inventory(character.inventory)
         
-        # Update class panel
+        # Update class panel with class and experience information
         self.class_panel.update_class(character.character_class)
+        self.class_panel.update_experience(
+            character.level,
+            character.experience,
+            character.experience_to_next_level
+        )
     
     def update_location(self, location):
         """Update the world panel with new location information."""

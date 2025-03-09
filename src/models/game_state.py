@@ -85,6 +85,7 @@ class GameState:
                     "value": 20,
                     "dice": ["1d10"],
                     "tags": {"tags": ["magic"]},
+                    "target_group": "single_ally"
                 }]
             ),
             Skill(
@@ -177,6 +178,9 @@ class GameState:
         character = Character(
             name="Elyndra",
             character_class=arcane_adept,
+            level=2,
+            experience=75,
+            experience_to_next_level=150,
             health=80,
             max_health=100,
             mana=40,

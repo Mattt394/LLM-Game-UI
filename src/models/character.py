@@ -148,6 +148,7 @@ class Character:
     character_class: CharacterClass
     level: int = 1
     experience: int = 0
+    experience_to_next_level: int = 100
     health: int = 100
     max_health: int = 100
     mana: int = 50
@@ -170,6 +171,7 @@ class Character:
             "character_class": self.character_class.to_dict(),
             "level": self.level,
             "experience": self.experience,
+            "experience_to_next_level": self.experience_to_next_level,
             "health": self.health,
             "max_health": self.max_health,
             "mana": self.mana,
