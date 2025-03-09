@@ -1,11 +1,16 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
-                             QLineEdit, QPushButton, QSplitter, QDialog, QSpacerItem, QSizePolicy, QListWidgetItem, QLabel)
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QIcon, QFont
+                             QLineEdit, QPushButton, QSplitter, QDialog, QSpacerItem, QSizePolicy, QListWidgetItem, QLabel, QMenu, QMenuBar,
+                             QStatusBar, QApplication)
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QTimer
+from PyQt6.QtGui import QAction, QIcon, QFont, QTextCursor
 
-from .status_bar import StatusBar
-from .inventory_panel import InventoryPanel
-from .character_window import CharacterWindow
+from src.ui.status_bar import StatusBar
+from src.ui.inventory_panel import InventoryPanel
+from src.ui.character_window import CharacterWindow
+from src.models.character import Character, CharacterEquipment
+from src.models.item import Item, EquipmentItem
+from src.models.game_master import GameMaster, StorytellerGM, example_story
+from src.utils.theme_manager import ThemeManager
 
 
 class MainWindow(QMainWindow):
@@ -13,6 +18,7 @@ class MainWindow(QMainWindow):
     
     story_message_sent = pyqtSignal(str)
     gm_message_sent = pyqtSignal(str)
+    gm_message_received = pyqtSignal(str)
     theme_toggled = pyqtSignal()
     
     def __init__(self):
@@ -20,7 +26,23 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("AI-Driven Text Adventure Game")
         self.resize(1200, 800)
         self.character_window = None
+        
+        # Initialize theme manager
+        self.theme_manager = ThemeManager()
+        
+        # Create a dummy character for testing
+        self._character = Character("Test Character", "Human", "Arcane Adept")
+        
+        # Initialize the game master
+        self.game_master = StorytellerGM(example_story)
+        
+        # Connect the game master's signal to our method
+        self.game_master.send_gm_message.connect(self._receive_gm_message)
+        
         self._init_ui()
+        
+        # Start the game master conversation
+        QTimer.singleShot(1000, self.game_master.start_conversation)
     
     def _init_ui(self):
         """Initialize the UI components."""
@@ -197,17 +219,28 @@ class MainWindow(QMainWindow):
             self.story_message_sent.emit(message)
     
     def _send_gm_message(self):
-        """Send a message to the GM log."""
-        message = self.gm_input.text().strip()
+        """Send a message to the GM chat."""
+        message = self.gm_input.text()
         if message:
             self.gm_text_edit.append(f"<span style='color:#a6e3a1;'>You:</span> {message}")
             self.gm_input.clear()
             self.gm_message_sent.emit(message)
     
+    def _receive_gm_message(self, message):
+        """Receive a message from the game master and display it in the GM chat."""
+        self.gm_text_edit.append(f"<span style='color:#89b4fa;'>GM:</span> {message}")
+        
+        # Ensure the message is visible by scrolling to the bottom
+        self.gm_text_edit.moveCursor(QTextCursor.MoveOperation.End)
+        
+        # Emit a signal that can be caught by the GameApp to add this to the game state
+        # We don't emit gm_message_sent because that's for player messages
+        if hasattr(self, 'gm_message_received'):
+            self.gm_message_received.emit(message)
+    
     def _show_character_window(self):
         """Show the character window."""
         if not self.character_window:
-            # Create the character window if it doesn't exist
             self.character_window = CharacterWindow()
             
             # Connect signals
@@ -217,7 +250,11 @@ class MainWindow(QMainWindow):
             self.character_window.item_equipped.connect(self._handle_item_equipped)
             self.character_window.item_unequipped.connect(self._handle_item_unequipped)
             
-            # Connect inventory panel signals directly
+            # Connect the inventory panel signals
+            self.character_window.inventory_panel.item_examined.connect(self._handle_item_examined)
+            self.character_window.inventory_panel.item_used.connect(self._handle_item_used)
+            self.character_window.inventory_panel.item_dropped.connect(self._handle_item_dropped)
+            self.character_window.inventory_panel.item_equipped.connect(self._handle_item_equipped)
             self.character_window.inventory_panel.item_unequipped.connect(self._handle_item_unequipped_from_inventory)
         
         # Always update the character window with current inventory before showing it
@@ -229,8 +266,10 @@ class MainWindow(QMainWindow):
                     items.append(item.data(Qt.ItemDataRole.UserRole))
             self.character_window.inventory_panel.update_inventory(items)
         
-        # Show the window
+        # Show the window and make sure it's in front
         self.character_window.show()
+        self.character_window.raise_()  # Bring window to front
+        self.character_window.activateWindow()  # Give it focus
         
         # Force an update of the character window if it's already created
         # This ensures the character class and location information is displayed
@@ -438,4 +477,12 @@ class MainWindow(QMainWindow):
             item = self.inventory_panel.inventory_list.item(i)
             if item:
                 items.append(item.data(Qt.ItemDataRole.UserRole))
-        return items 
+        return items
+    
+    def closeEvent(self, event):
+        """Handle the window close event."""
+        # Stop the game master conversation
+        self.game_master.stop_conversation()
+        
+        # Accept the event to close the window
+        event.accept() 

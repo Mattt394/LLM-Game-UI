@@ -16,7 +16,7 @@ from src.models.llm_game_master import LLMGameMaster
 class GameApp:
     """Main application class for the text adventure game UI."""
     
-    def __init__(self, use_llm=False):
+    def __init__(self, use_llm=True):
         self.app = QApplication(sys.argv)
         self.theme_manager = ThemeManager()
         self.main_window = MainWindow()
@@ -128,6 +128,6 @@ class GameApp:
 
 
 if __name__ == "__main__":
-    # Set use_llm=True to use the LLM-based game master
-    app = GameApp(use_llm=False)
+    # Use the LLM-based game master
+    app = GameApp(use_llm=True)
     sys.exit(app.run()) 
