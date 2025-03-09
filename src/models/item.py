@@ -50,6 +50,7 @@ class EquipmentItem(Item):
     magic_defense: int = 0
     attack_dice: List[str] = field(default_factory=list)
     tags: Dict[str, List[str]] = field(default_factory=lambda: {"tags": []})
+    equipped: bool = False
     
     def to_dict(self) -> Dict[str, Any]:
         item_dict = super().to_dict()
@@ -62,7 +63,8 @@ class EquipmentItem(Item):
             "magic_attack": self.magic_attack,
             "magic_defense": self.magic_defense,
             "attack_dice": self.attack_dice,
-            "tags": self.tags
+            "tags": self.tags,
+            "equipped": self.equipped
         })
         return item_dict
     
@@ -83,5 +85,6 @@ class EquipmentItem(Item):
             magic_attack=data.get("magic_attack", 0),
             magic_defense=data.get("magic_defense", 0),
             attack_dice=data.get("attack_dice", []),
-            tags=data.get("tags", {"tags": []})
+            tags=data.get("tags", {"tags": []}),
+            equipped=data.get("equipped", False)
         ) 

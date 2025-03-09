@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
-                             QLineEdit, QPushButton, QSplitter, QDialog, QSpacerItem, QSizePolicy, QListWidgetItem)
+                             QLineEdit, QPushButton, QSplitter, QDialog, QSpacerItem, QSizePolicy, QListWidgetItem, QLabel)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QIcon, QFont
 
@@ -24,31 +24,41 @@ class MainWindow(QMainWindow):
     
     def _init_ui(self):
         """Initialize the UI components."""
-        # Central widget
+        # Create central widget and main layout
         central_widget = QWidget()
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         self.setCentralWidget(central_widget)
         
-        # Main layout
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 15)  # Add bottom margin
-        main_layout.setSpacing(0)
-        
-        # Create splitter for main content
+        # Create splitter for main panels
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.setChildrenCollapsible(False)
         
-        # Left panel (Story)
+        # Left panel (story)
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(10, 10, 10, 10)
+        left_layout.setContentsMargins(15, 15, 15, 15)
+        left_layout.setSpacing(10)
         
-        # Story text edit
+        # Story header
+        story_header = QLabel("Story", left_panel)
+        story_header.setObjectName("storyHeader")
+        story_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = story_header.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        story_header.setFont(font)
+        left_layout.addWidget(story_header)
+        
+        # Story text area
         self.story_text_edit = QTextEdit()
         self.story_text_edit.setObjectName("mainStoryTextEdit")
         self.story_text_edit.setReadOnly(True)
+        left_layout.addWidget(self.story_text_edit)
         
-        # Story input
+        # Story input area
         story_input_layout = QHBoxLayout()
+        
         self.story_input = QLineEdit()
         self.story_input.setPlaceholderText("Enter your action...")
         self.story_input.returnPressed.connect(self._send_story_message)
@@ -59,21 +69,32 @@ class MainWindow(QMainWindow):
         story_input_layout.addWidget(self.story_input)
         story_input_layout.addWidget(self.story_send_button)
         
-        left_layout.addWidget(self.story_text_edit)
         left_layout.addLayout(story_input_layout)
         
-        # Right panel (GM Chat & Inventory)
+        # Right panel (GM chat and inventory)
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(10, 10, 10, 10)
+        right_layout.setContentsMargins(15, 15, 15, 15)
+        right_layout.setSpacing(10)
         
-        # GM chat text edit
+        # GM header
+        gm_header = QLabel("GM Chat", right_panel)
+        gm_header.setObjectName("gmHeader")
+        gm_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = gm_header.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        gm_header.setFont(font)
+        right_layout.addWidget(gm_header)
+        
+        # GM chat area
         self.gm_text_edit = QTextEdit()
         self.gm_text_edit.setObjectName("gmLogTextEdit")
         self.gm_text_edit.setReadOnly(True)
         
-        # GM chat input
+        # GM input area
         gm_input_layout = QHBoxLayout()
+        
         self.gm_input = QLineEdit()
         self.gm_input.setPlaceholderText("Chat with GM...")
         self.gm_input.returnPressed.connect(self._send_gm_message)
@@ -86,6 +107,13 @@ class MainWindow(QMainWindow):
         
         # Inventory panel
         self.inventory_panel = InventoryPanel()
+        
+        # Connect inventory panel signals
+        self.inventory_panel.item_examined.connect(self._handle_item_examined)
+        self.inventory_panel.item_used.connect(self._handle_item_used)
+        self.inventory_panel.item_dropped.connect(self._handle_item_dropped)
+        self.inventory_panel.item_equipped.connect(self._handle_item_equipped)
+        self.inventory_panel.item_unequipped.connect(self._handle_item_unequipped_from_inventory)
         
         right_layout.addWidget(self.gm_text_edit, 2)
         right_layout.addLayout(gm_input_layout)
@@ -188,6 +216,9 @@ class MainWindow(QMainWindow):
             self.character_window.item_dropped.connect(self._handle_item_dropped)
             self.character_window.item_equipped.connect(self._handle_item_equipped)
             self.character_window.item_unequipped.connect(self._handle_item_unequipped)
+            
+            # Connect inventory panel signals directly
+            self.character_window.inventory_panel.item_unequipped.connect(self._handle_item_unequipped_from_inventory)
         
         # Always update the character window with current inventory before showing it
         if hasattr(self, 'inventory_panel') and self.inventory_panel:
@@ -290,22 +321,26 @@ class MainWindow(QMainWindow):
         
         # Actually equip the item in the character's equipment
         if hasattr(self, '_character'):
-            # Remove from inventory
-            for i in range(self.inventory_panel.inventory_list.count()):
-                list_item = self.inventory_panel.inventory_list.item(i)
-                if list_item and list_item.data(Qt.ItemDataRole.UserRole) == item:
-                    self.inventory_panel.inventory_list.takeItem(i)
-                    break
+            # Mark the item as equipped first
+            item.equipped = True
             
             # Add to equipment
             if item.slot == 'two_handed':
                 # Unequip main_hand and off_hand if equipping a two-handed weapon
+                if self._character.equipment.equipment['main_hand']:
+                    self._character.equipment.equipment['main_hand'].equipped = False
+                if self._character.equipment.equipment['off_hand']:
+                    self._character.equipment.equipment['off_hand'].equipped = False
                 self._character.equipment.equipment['main_hand'] = None
                 self._character.equipment.equipment['off_hand'] = None
                 self._character.equipment.equipment['two_handed'] = item
             elif item.slot in ['main_hand', 'off_hand']:
                 # Unequip two_handed if equipping a one-handed weapon
+                if self._character.equipment.equipment['two_handed']:
+                    self._character.equipment.equipment['two_handed'].equipped = False
                 self._character.equipment.equipment['two_handed'] = None
+                if self._character.equipment.equipment[item.slot]:
+                    self._character.equipment.equipment[item.slot].equipped = False
                 self._character.equipment.equipment[item.slot] = item
             elif item.slot == 'accessories':
                 # Add to accessories list
@@ -315,14 +350,55 @@ class MainWindow(QMainWindow):
                     self._character.equipment.equipment['accessories'].append(item)
             else:
                 # Regular equipment slot
+                if self._character.equipment.equipment[item.slot]:
+                    self._character.equipment.equipment[item.slot].equipped = False
                 self._character.equipment.equipment[item.slot] = item
+            
+            # Update both inventory panels with the current inventory
+            current_inventory = self._get_inventory_items()
+            self.inventory_panel.update_inventory(current_inventory)
             
             # Update character window if it exists
             if self.character_window:
                 self.character_window.equipment_panel.update_equipment(self._character.equipment.equipment)
+                self.character_window.inventory_panel.update_inventory(current_inventory)
+    
+    def _handle_item_unequipped_from_inventory(self, item):
+        """Handle item unequipping from the inventory panel."""
+        # This would typically send a message to the backend
+        self.story_text_edit.append(f"<span style='color:#a6e3a1;'>You:</span> I unequip the {item.name}.")
+        
+        # Actually unequip the item from the character's equipment
+        if hasattr(self, '_character'):
+            # Find the slot that contains this item
+            slot = None
+            for slot_name, equipped_item in self._character.equipment.equipment.items():
+                if equipped_item == item:
+                    slot = slot_name
+                    break
+            
+            if slot:
+                # Remove from equipment
+                if slot == 'accessories':
+                    if 'accessories' in self._character.equipment.equipment:
+                        if item in self._character.equipment.equipment['accessories']:
+                            self._character.equipment.equipment['accessories'].remove(item)
+                            item.equipped = False
+                else:
+                    self._character.equipment.equipment[slot] = None
+                    item.equipped = False
+                
+                # Update both inventory panels with the current inventory
+                current_inventory = self._get_inventory_items()
+                self.inventory_panel.update_inventory(current_inventory)
+                
+                # Update character window if it exists
+                if self.character_window:
+                    self.character_window.equipment_panel.update_equipment(self._character.equipment.equipment)
+                    self.character_window.inventory_panel.update_inventory(current_inventory)
     
     def _handle_item_unequipped(self, slot, item):
-        """Handle item unequipping."""
+        """Handle item unequipping from equipment slots."""
         # This would typically send a message to the backend
         self.story_text_edit.append(f"<span style='color:#a6e3a1;'>You:</span> I unequip the {item.name}.")
         
@@ -333,16 +409,21 @@ class MainWindow(QMainWindow):
                 if 'accessories' in self._character.equipment.equipment:
                     if item in self._character.equipment.equipment['accessories']:
                         self._character.equipment.equipment['accessories'].remove(item)
+                        item.equipped = False
             else:
                 self._character.equipment.equipment[slot] = None
+                item.equipped = False
             
-            # Add back to inventory
-            self.inventory_panel.inventory_list.addItem(self._create_inventory_item(item))
+            # Update both inventory panels with the current inventory
+            # Note: We don't need to add the item back to inventory manually
+            # because it's already in the character's inventory list, just marked as equipped
+            current_inventory = self._get_inventory_items()
+            self.inventory_panel.update_inventory(current_inventory)
             
             # Update character window if it exists
             if self.character_window:
                 self.character_window.equipment_panel.update_equipment(self._character.equipment.equipment)
-                self.character_window.inventory_panel.update_inventory(self._get_inventory_items())
+                self.character_window.inventory_panel.update_inventory(current_inventory)
     
     def _create_inventory_item(self, item):
         """Create a QListWidgetItem for an inventory item."""

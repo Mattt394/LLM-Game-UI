@@ -306,6 +306,12 @@ QProgressBar::chunk {
     color: #a6e3a1;
 }
 
+#equippedLabel {
+    color: #89b4fa;
+    font-style: italic;
+    font-size: 9pt;
+}
+
 /* Rarity Colors */
 .common {
     color: #cdd6f4;

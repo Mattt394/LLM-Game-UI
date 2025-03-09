@@ -45,6 +45,12 @@ class ItemTooltip(QFrame):
         description.setWordWrap(True)
         layout.addWidget(description)
         
+        # Equipped status
+        if hasattr(self.item, 'equipped') and self.item.equipped:
+            equipped_label = QLabel("(Equipped)", self)
+            equipped_label.setObjectName("equippedLabel")
+            layout.addWidget(equipped_label)
+        
         # Item stats (for equipment)
         if hasattr(self.item, 'physical_attack') and any([
             self.item.physical_attack, self.item.physical_defense,
@@ -76,6 +82,7 @@ class InventoryPanel(QWidget):
     item_used = pyqtSignal(object)
     item_dropped = pyqtSignal(object)
     item_equipped = pyqtSignal(object)
+    item_unequipped = pyqtSignal(object)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -118,6 +125,11 @@ class InventoryPanel(QWidget):
         for item in items:
             list_item = QListWidgetItem(item.name)
             list_item.setData(Qt.ItemDataRole.UserRole, item)
+            
+            # Gray out equipped items
+            if hasattr(item, 'equipped') and item.equipped:
+                list_item.setForeground(Qt.GlobalColor.gray)
+            
             self.inventory_list.addItem(list_item)
     
     def _show_context_menu(self, position):
@@ -136,10 +148,13 @@ class InventoryPanel(QWidget):
         use_action = menu.addAction("Use")
         drop_action = menu.addAction("Drop")
         
-        # Add equip action if it's an equipment item
+        # Add equip/unequip action if it's an equipment item
         equip_action = None
         if hasattr(game_item, 'slot'):
-            equip_action = menu.addAction("Equip")
+            if hasattr(game_item, 'equipped') and game_item.equipped:
+                equip_action = menu.addAction("Unequip")
+            else:
+                equip_action = menu.addAction("Equip")
         
         # Show the menu and handle the selected action
         action = menu.exec(self.inventory_list.mapToGlobal(position))
@@ -151,7 +166,10 @@ class InventoryPanel(QWidget):
         elif action == drop_action:
             self.item_dropped.emit(game_item)
         elif equip_action and action == equip_action:
-            self.item_equipped.emit(game_item)
+            if hasattr(game_item, 'equipped') and game_item.equipped:
+                self.item_unequipped.emit(game_item)
+            else:
+                self.item_equipped.emit(game_item)
     
     def _show_item_tooltip(self, item):
         """Show a tooltip for the item."""

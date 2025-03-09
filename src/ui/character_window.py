@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QScrollArea, QFrame, QGridLayout, QListWidget, QListWidgetItem,
-                             QProgressBar)
+                             QProgressBar, QMenu, QApplication)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from .inventory_panel import InventoryPanel
@@ -9,13 +9,14 @@ from .inventory_panel import InventoryPanel
 class EquipmentSlot(QFrame):
     """A slot for equipped items."""
     
-    item_clicked = pyqtSignal(object)
+    item_unequipped = pyqtSignal(str, object)
     
     def __init__(self, slot_name, parent=None):
         super().__init__(parent)
         self.setObjectName("equipmentSlot")
         self.slot_name = slot_name
         self.item = None
+        self.tooltip = None
         self._init_ui()
     
     def _init_ui(self):
@@ -39,8 +40,12 @@ class EquipmentSlot(QFrame):
         self.setLayout(layout)
         self.setProperty("occupied", "false")
         
-        # Connect signals
-        self.mousePressEvent = self._on_click
+        # Enable mouse tracking for hover events
+        self.setMouseTracking(True)
+        
+        # Set context menu policy
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
     
     def set_item(self, item):
         """Set the item in this slot."""
@@ -62,10 +67,77 @@ class EquipmentSlot(QFrame):
         self.style().unpolish(self)
         self.style().polish(self)
     
-    def _on_click(self, event):
-        """Handle mouse click events."""
+    def enterEvent(self, event):
+        """Handle mouse enter events to show tooltip."""
         if self.item:
-            self.item_clicked.emit(self.item)
+            from .inventory_panel import ItemTooltip
+            
+            # Create and show the tooltip
+            if self.tooltip:
+                self.tooltip.hide()
+                self.tooltip.deleteLater()
+            
+            self.tooltip = ItemTooltip(self.item)
+            
+            # Calculate tooltip size before showing it
+            self.tooltip.adjustSize()
+            tooltip_width = self.tooltip.width()
+            tooltip_height = self.tooltip.height()
+            
+            # Get global position for the tooltip
+            global_pos = self.mapToGlobal(self.rect().topRight())
+            
+            # Get screen geometry to ensure tooltip stays within screen
+            screen_rect = QApplication.primaryScreen().availableGeometry()
+            
+            # Adjust position if tooltip would go off-screen
+            if global_pos.x() + tooltip_width > screen_rect.right():
+                # If tooltip would go off right edge, show it to the left of the slot
+                global_pos.setX(global_pos.x() - tooltip_width - self.width() - 10)
+            else:
+                # Otherwise, show it to the right with a small offset
+                global_pos.setX(global_pos.x() + 10)
+            
+            # Check if tooltip would go off bottom of screen
+            if global_pos.y() + tooltip_height > screen_rect.bottom():
+                # Move it up so it fits
+                global_pos.setY(screen_rect.bottom() - tooltip_height)
+            
+            self.tooltip.move(global_pos)
+            self.tooltip.show()
+        
+        super().enterEvent(event)
+    
+    def leaveEvent(self, event):
+        """Handle mouse leave events to hide tooltip."""
+        if self.tooltip:
+            self.tooltip.hide()
+            self.tooltip.deleteLater()
+            self.tooltip = None
+        
+        super().leaveEvent(event)
+    
+    def _show_context_menu(self, position):
+        """Show the context menu for an equipped item."""
+        if not self.item:
+            return
+        
+        menu = QMenu(self)
+        menu.setObjectName("itemActionMenu")
+        
+        # Add actions
+        examine_action = menu.addAction("Examine")
+        unequip_action = menu.addAction("Unequip")
+        
+        # Show the menu and handle the selected action
+        action = menu.exec(self.mapToGlobal(position))
+        
+        if action == examine_action:
+            # For now, we'll just show the tooltip
+            # In the future, you might want to emit a signal for examination
+            pass
+        elif action == unequip_action:
+            self.item_unequipped.emit(self.slot_name, self.item)
 
 
 class EquipmentPanel(QWidget):
@@ -123,7 +195,7 @@ class EquipmentPanel(QWidget):
         
         # Connect signals
         for slot_name, slot in self.slots.items():
-            slot.item_clicked.connect(lambda item, slot=slot_name: self.item_unequipped.emit(slot, item))
+            slot.item_unequipped.connect(lambda slot_name, item, slot=slot_name: self.item_unequipped.emit(slot, item))
         
         self.setLayout(layout)
     
