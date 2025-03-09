@@ -172,23 +172,30 @@ QToolTip {
     padding: 4px;
 }
 
-#healthBar, #manaBar, #staminaBar {
+/* Progress Bar Styling - No Animation */
+QProgressBar {
     border: 1px solid #45475a;
     border-radius: 2px;
     text-align: center;
     min-height: 16px;
+    background-color: #2a2a3a; /* Dark grey for depleted portion */
 }
 
-#healthBar {
-    background-color: #f38ba8;
+QProgressBar::chunk {
+    border-radius: 1px;
 }
 
-#manaBar {
-    background-color: #89b4fa;
+/* Specific Progress Bar Colors */
+#healthBar::chunk {
+    background-color: #e64553; /* Red for health */
 }
 
-#staminaBar {
-    background-color: #a6e3a1;
+#manaBar::chunk {
+    background-color: #5e81ac; /* Blue for mana */
+}
+
+#staminaBar::chunk {
+    background-color: #e5c07b; /* Yellow for stamina */
 }
 
 #timeOfDayLabel {

@@ -10,7 +10,8 @@ class ThemeManager(QObject):
     
     def __init__(self):
         super().__init__()
-        self._theme = self._detect_system_theme()
+        # Always use dark theme as default instead of detecting system theme
+        self._theme = "dark"
         self._stylesheet = self._load_stylesheet(self._theme)
     
     def _detect_system_theme(self):
