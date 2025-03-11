@@ -70,7 +70,13 @@ python src/main.py
 │   ├── ui/                # UI components
 │   ├── utils/             # Utility functions
 │   └── main.py           # Application entry point
+├── tests/                 # UI tests
+│   ├── test_ui.py        # Main UI test suite
+│   ├── run_tests.py      # Test runner script
+│   └── README.md         # Test documentation
 ├── requirements.txt       # Python dependencies
+├── requirements-dev.txt   # Development dependencies
+├── pytest.ini            # Pytest configuration
 ├── LICENSE               # MIT License
 └── README.md            # This file
 ```
@@ -86,6 +92,7 @@ The project currently implements a fully functional UI with:
 - World information panel
 - Theme support (dark/light)
 - Proper state management between different panels
+- Comprehensive UI test suite
 
 ### Next Steps
 To make this a complete game, the following would be needed:
@@ -96,6 +103,31 @@ To make this a complete game, the following would be needed:
 5. Quest system
 6. NPC interaction system
 7. Multiplayer support (optional)
+
+## Testing
+
+The project includes a comprehensive UI test suite to ensure that the UI components work correctly and interact properly with each other.
+
+### Running Tests
+
+Run all tests with:
+```bash
+python tests/run_tests.py
+```
+
+Or if you have pytest installed:
+```bash
+pytest
+```
+
+### Test Dependencies
+
+Install the development dependencies with:
+```bash
+pip install -r requirements-dev.txt
+```
+
+For more information about the tests, see the [tests/README.md](tests/README.md) file.
 
 ## License
 
