@@ -25,8 +25,16 @@ class LLMGameMaster(GameMaster):
         Simulate an LLM response.
         In a real implementation, this would call an actual LLM API.
         """
-        # Add a small delay to simulate API call
-        time.sleep(1)
+        # Add a 7-second delay if "rest" is in the prompt
+        if "rest" in prompt.lower():
+            time.sleep(7)  # Simulate a long processing time
+        else:
+            # Add a small delay to simulate API call (shorter for normal responses)
+            time.sleep(1)
+        
+        # Special response for "rest"
+        if "rest" in prompt.lower():
+            return "You find a comfortable spot and take a long rest. After about 7 hours of sleep, you feel refreshed and rejuvenated. Your health and energy are fully restored."
         
         # Simple response templates based on keywords
         responses = {

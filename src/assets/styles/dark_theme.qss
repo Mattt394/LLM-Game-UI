@@ -331,4 +331,17 @@ QProgressBar::chunk {
 
 .legendary {
     color: #fab387;
+}
+
+#gmStatusIndicator {
+    background-color: #282a36;  /* Slightly lighter than main background */
+    border: 1px solid #45475a;  /* Subtle border */
+    border-radius: 6px;         /* Rounded corners */
+    padding: 4px 10px;          /* Slightly more horizontal padding */
+}
+
+#gmStatusLabel {
+    color: #89b4fa;  /* Light blue color */
+    font-size: 11pt;
+    font-weight: bold;
 } 

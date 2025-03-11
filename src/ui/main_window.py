@@ -13,6 +13,76 @@ from src.models.game_master import GameMaster, StorytellerGM, example_story
 from src.utils.theme_manager import ThemeManager
 
 
+class GMStatusIndicator(QWidget):
+    """Widget that shows the current status of the GM (thinking, ready, etc.)"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("gmStatusIndicator")
+        self.setMinimumHeight(36)  # Slightly smaller height
+        self.setMaximumWidth(150)  # Narrower width for a more subtle look
+        
+        # Initialize UI
+        self._init_ui()
+        
+        # For the thinking animation
+        self.thinking_timer = QTimer(self)
+        self.thinking_timer.timeout.connect(self._update_thinking_animation)
+        self.thinking_dots = 0
+        self.is_thinking = False
+    
+    def _init_ui(self):
+        """Initialize the UI components."""
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        
+        # Status label - use fixed width and left alignment
+        self.status_label = QLabel("GM: Ready", self)
+        self.status_label.setObjectName("gmStatusLabel")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.status_label.setMinimumWidth(120)  # Set minimum width to accommodate text + dots
+        
+        # Make the font bold and slightly larger
+        font = self.status_label.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 1)
+        self.status_label.setFont(font)
+        
+        # Set consistent light blue color
+        self.status_label.setStyleSheet("color: #89b4fa;")  # Light blue color
+        
+        layout.addWidget(self.status_label)
+        self.setLayout(layout)
+    
+    def start_thinking(self):
+        """Start the 'GM is thinking...' animation."""
+        self.is_thinking = True
+        self.thinking_dots = 0
+        self.status_label.setText("GM: Thinking    ")  # Add padding spaces for dots
+        
+        # Start the timer to update the animation
+        self.thinking_timer.start(500)  # Update every 500ms
+    
+    def _update_thinking_animation(self):
+        """Update the thinking animation dots."""
+        if not self.is_thinking:
+            return
+            
+        self.thinking_dots = (self.thinking_dots + 1) % 4
+        dots = "." * self.thinking_dots
+        padding = " " * (3 - self.thinking_dots)  # Add padding to keep width consistent
+        self.status_label.setText(f"GM: Thinking{dots}{padding}")
+    
+    def stop_thinking(self):
+        """Stop the thinking animation."""
+        if not self.is_thinking:
+            return
+            
+        self.is_thinking = False
+        self.thinking_timer.stop()
+        self.status_label.setText("GM: Ready")
+
+
 class MainWindow(QMainWindow):
     """Main window for the text adventure game UI."""
     
@@ -164,9 +234,13 @@ class MainWindow(QMainWindow):
         self.character_button.setFont(font)
         self.character_button.clicked.connect(self._show_character_window)
         
-        # Add button to layout with spacer
+        # GM Status Indicator (on the right side)
+        self.gm_status = GMStatusIndicator()
+        
+        # Add button and status indicator to layout with spacer in between
         button_layout.addWidget(self.character_button)
         button_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        button_layout.addWidget(self.gm_status)
         
         # Status bar
         self.status_bar = StatusBar()
@@ -224,10 +298,18 @@ class MainWindow(QMainWindow):
         if message:
             self.gm_text_edit.append(f"<span style='color:#a6e3a1;'>You:</span> {message}")
             self.gm_input.clear()
+            
+            # Show the GM is thinking
+            self.gm_status.start_thinking()
+            
             self.gm_message_sent.emit(message)
     
     def _receive_gm_message(self, message):
         """Receive a message from the game master and display it in the GM chat."""
+        # Stop the thinking animation
+        self.gm_status.stop_thinking()
+        
+        # Display the actual message
         self.gm_text_edit.append(f"<span style='color:#89b4fa;'>GM:</span> {message}")
         
         # Ensure the message is visible by scrolling to the bottom
